@@ -64,6 +64,11 @@ def generate():
         output_file = "final_video.mp4"
         video.write_videofile(output_file, fps=24, codec="libx264")
 
+        # Explicitly close clips to free memory
+        for clip in clips:
+            clip.close()
+        video.close()
+
         # Cleanup intermediate images
         for img in image_files:
             try:
@@ -71,7 +76,11 @@ def generate():
             except:
                 pass
 
-        return send_file(output_file, as_attachment=True)
+        response = send_file(output_file, as_attachment=True)
+        
+        # We can't easily delete the final_video.mp4 here because send_file needs it.
+        # However, for the next request, it will be overwritten.
+        return response
 
     except Exception as e:
         print(f"Generation failed: {e}")
