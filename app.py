@@ -46,7 +46,7 @@ def generate():
 
         image_files = []
         # Generate 3 cinematic scenes for the video
-        for i in range(3):
+        for i in range(1):
             # Adding variety to the prompt for each scene
             scene_prompt = f"{prompt}, scene {i+1}, cinematic lighting, high detail, 4k"
             image = query_with_retry(scene_prompt)

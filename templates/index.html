@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -123,7 +124,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .status {
@@ -149,15 +152,17 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>GenAI Studio</h1>
         <p>Transform your ideas into cinematic videos in seconds.</p>
-        
+
         <form id="generateForm">
             <div class="input-group">
                 <label for="prompt">What do you want to see?</label>
-                <input type="text" id="prompt" name="prompt" placeholder="e.g., A cyberpunk neon city at night..." required>
+                <input type="text" id="prompt" name="prompt" placeholder="e.g., A cyberpunk neon city at night..."
+                    required>
             </div>
             <button type="submit" id="submitBtn">
                 <span id="btnText">Generate Video</span>
@@ -177,7 +182,7 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             // UI States
             submitBtn.disabled = true;
             loader.style.display = 'block';
@@ -187,7 +192,7 @@
             statusBox.style.display = 'block';
 
             const formData = new FormData(form);
-            
+
             try {
                 const response = await fetch('/generate', {
                     method: 'POST',
@@ -204,14 +209,23 @@
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
-                    
+
                     statusBox.textContent = 'Success! Your video is downloading.';
                     setTimeout(() => {
                         statusBox.style.display = 'none';
                     }, 5000);
                 } else {
-                    const data = await response.json();
-                    throw new Error(data.error || 'Failed to generate video');
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        throw new Error(data.error || 'Failed to generate video');
+                    } else if (response.status === 504) {
+                        throw new Error('Gateway Timeout: The generation took too long for Render\'s default limits.');
+                    } else {
+                        const text = await response.text();
+                        console.error('Server error response:', text);
+                        throw new Error(`Server returned an error (${response.status}). This often happens if the app crashes or times out on Render.`);
+                    }
                 }
             } catch (error) {
                 statusBox.className = 'status error';
@@ -224,4 +238,5 @@
         });
     </script>
 </body>
+
 </html>
