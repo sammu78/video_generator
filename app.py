@@ -8,6 +8,7 @@ import imageio_ffmpeg as ffmpeg
 
 load_dotenv()
 
+# Render redeploy trigger
 app = Flask(__name__)
 
 # Configure MoviePy to use imageio-ffmpeg's binary
