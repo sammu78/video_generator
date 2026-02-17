@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI | Premium Video Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(15, 23, 42, 0.5);
+            color: var(--text);
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 03);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status {
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: none;
+        }
+
+        .status.loading {
+            display: block;
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .status.error {
+            display: block;
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GenAI Studio</h1>
+        <p>Transform your ideas into cinematic videos in seconds.</p>
+        
+        <form id="generateForm">
+            <div class="input-group">
+                <label for="prompt">What do you want to see?</label>
+                <input type="text" id="prompt" name="prompt" placeholder="e.g., A cyberpunk neon city at night..." required>
+            </div>
+            <button type="submit" id="submitBtn">
+                <span id="btnText">Generate Video</span>
+                <div class="loader" id="loader"></div>
+            </button>
+        </form>
+
+        <div id="statusBox" class="status"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('generateForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loader = document.getElementById('loader');
+        const btnText = document.getElementById('btnText');
+        const statusBox = document.getElementById('statusBox');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // UI States
+            submitBtn.disabled = true;
+            loader.style.display = 'block';
+            btnText.textContent = 'Generating...';
+            statusBox.className = 'status loading';
+            statusBox.textContent = 'Hugging Face is sketching your masterpiece. This may take a minute...';
+            statusBox.style.display = 'block';
+
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'final_video.mp4';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    statusBox.textContent = 'Success! Your video is downloading.';
+                    setTimeout(() => {
+                        statusBox.style.display = 'none';
+                    }, 5000);
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to generate video');
+                }
+            } catch (error) {
+                statusBox.className = 'status error';
+                statusBox.textContent = `Error: ${error.message}`;
+            } finally {
+                submitBtn.disabled = false;
+                loader.style.display = 'none';
+                btnText.textContent = 'Generate Video';
+            }
+        });
+    </script>
+</body>
+</html>
